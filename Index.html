@@ -52,7 +52,6 @@
 
     const tokenBox = document.getElementById('tokenBox');
     const copyBtn = document.getElementById('copyBtn');
-    const openBtn = document.getElementById('openBtn');
     const messageArea = document.getElementById('messageArea');
 
     function showMessage(text, type='info'){
@@ -71,12 +70,10 @@
       if (token) {
         tokenBox.textContent = token;
         copyBtn.disabled = false;
-        openBtn.disabled = false;
-        showMessage('Token found in URL hash. You can copy it or open the redirect URL in a new tab.');
+        showMessage('Token found in URL hash. You can copy it and go back to Crush Accounting.');
       } else {
         tokenBox.textContent = 'No token found in the URL hash.';
         copyBtn.disabled = true;
-        openBtn.disabled = true;
         showMessage('No token present. Make sure the reset link contains the token in the URL hash (e.g. #access_token=...).', 'warn');
       }
 
@@ -89,20 +86,6 @@
           console.error(err);
           showMessage('Could not copy automatically. Select the token text and copy manually.');
         }
-      });
-
-      openBtn.addEventListener('click', () => {
-        if (openBtn.disabled) return;
-        // try to reconstruct a friendly URL without the token for safety
-        const hash = window.location.hash.replace(/^#/, '');
-        const params = hash.split('&').filter(Boolean).map(p => {
-          // keep non-token params
-          if (p.startsWith('access_token=') || p.startsWith('acess_token=')) return null;
-          return p;
-        }).filter(Boolean).join('&');
-
-        const url = window.location.origin + window.location.pathname + (params ? '#' + params : '');
-        window.open(url, '_blank');
       });
     }
 

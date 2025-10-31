@@ -22,13 +22,12 @@
 <body>
   <div class="card">
     <h1>Reset token extractor</h1>
-    <p class="muted">This page reads the token from the URL hash and shows it below. Supports both <code>#access_token=</code> and <code>#acess_token=</code> (common misspelling).</p>
+    <p class="muted">This page reads the token from the URL hash and shows it below</p>
 
     <div id="tokenBox">Checking URL for token…</div>
 
     <div class="controls">
       <button id="copyBtn" class="copy">Copy token</button>
-      <button id="openBtn" class="open">Open redirect URL</button>
     </div>
 
     <div id="messageArea"></div>
@@ -75,7 +74,7 @@
         openBtn.disabled = false;
         showMessage('Token found in URL hash. You can copy it or open the redirect URL in a new tab.');
       } else {
-        tokenBox.textContent = 'No token found in the URL hash (expected keys: access_token or acess_token).';
+        tokenBox.textContent = 'No token found in the URL hash.';
         copyBtn.disabled = true;
         openBtn.disabled = true;
         showMessage('No token present. Make sure the reset link contains the token in the URL hash (e.g. #access_token=...).', 'warn');

@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Reset Token Extractor</title>
+  <style>
+    body { font-family: Inter, system-ui, -apple-system, Arial, sans-serif; display:flex; align-items:center; justify-content:center; min-height:100vh; background:#f3f4f6; margin:0; }
+    .card { background:white; padding:28px; border-radius:12px; box-shadow:0 6px 24px rgba(15,23,42,0.08); width:min(760px,92%); }
+    h1 { margin:0 0 8px 0; font-size:20px; }
+    p { margin:0 0 18px 0; color:#374151 }
+    #tokenBox { background:#111827; color:#f9fafb; padding:12px 14px; border-radius:8px; font-family:monospace; word-break:break-all; }
+    .muted { color:#6b7280; font-size:13px }
+    .controls { margin-top:16px; display:flex; gap:8px; }
+    button { padding:8px 12px; border-radius:8px; border:0; cursor:pointer; font-weight:600 }
+    button.copy { background:#111827; color:white }
+    button.copy:disabled { opacity:0.45; cursor:not-allowed }
+    button.open { background:#eef2ff; color:#4f46e5 }
+    .notice { margin-top:12px; padding:10px 12px; border-radius:8px; background:#fffbeb; color:#92400e; border:1px solid rgba(249,115,22,0.08) }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>Reset token extractor</h1>
+    <p class="muted">This page reads the token from the URL hash and shows it below. Supports both <code>#access_token=</code> and <code>#acess_token=</code> (common misspelling).</p>
+
+    <div id="tokenBox">Checking URL for token…</div>
+
+    <div class="controls">
+      <button id="copyBtn" class="copy">Copy token</button>
+      <button id="openBtn" class="open">Open redirect URL</button>
+    </div>
+
+    <div id="messageArea"></div>
+  </div>
+
+  <script>
+    // Parse hash parameters like: #access_token=xxx&other=yyy
+    function parseHashParams() {
+      const hash = window.location.hash.replace(/^#/, '');
+      const params = {};
+      if (!hash) return params;
+      // split by & then =
+      hash.split('&').forEach(pair => {
+        const idx = pair.indexOf('=');
+        if (idx === -1) return;
+        const key = decodeURIComponent(pair.substring(0, idx));
+        const value = decodeURIComponent(pair.substring(idx + 1));
+        params[key] = value;
+      });
+      return params;
+    }
+
+    const tokenBox = document.getElementById('tokenBox');
+    const copyBtn = document.getElementById('copyBtn');
+    const openBtn = document.getElementById('openBtn');
+    const messageArea = document.getElementById('messageArea');
+
+    function showMessage(text, type='info'){
+      messageArea.innerHTML = '';
+      const d = document.createElement('div');
+      d.className = type === 'warn' ? 'notice' : '';
+      d.textContent = text;
+      messageArea.appendChild(d);
+    }
+
+    function init() {
+      const params = parseHashParams();
+      // check for both exact keys to be forgiving
+      const token = params['access_token'] ?? params['acess_token'] ?? null;
+
+      if (token) {
+        tokenBox.textContent = token;
+        copyBtn.disabled = false;
+        openBtn.disabled = false;
+        showMessage('Token found in URL hash. You can copy it or open the redirect URL in a new tab.');
+      } else {
+        tokenBox.textContent = 'No token found in the URL hash (expected keys: access_token or acess_token).';
+        copyBtn.disabled = true;
+        openBtn.disabled = true;
+        showMessage('No token present. Make sure the reset link contains the token in the URL hash (e.g. #access_token=...).', 'warn');
+      }
+
+      copyBtn.addEventListener('click', async () => {
+        if (copyBtn.disabled) return;
+        try {
+          await navigator.clipboard.writeText(tokenBox.textContent);
+          showMessage('Token copied to clipboard.');
+        } catch (err) {
+          console.error(err);
+          showMessage('Could not copy automatically. Select the token text and copy manually.');
+        }
+      });
+
+      openBtn.addEventListener('click', () => {
+        if (openBtn.disabled) return;
+        // try to reconstruct a friendly URL without the token for safety
+        const hash = window.location.hash.replace(/^#/, '');
+        const params = hash.split('&').filter(Boolean).map(p => {
+          // keep non-token params
+          if (p.startsWith('access_token=') || p.startsWith('acess_token=')) return null;
+          return p;
+        }).filter(Boolean).join('&');
+
+        const url = window.location.origin + window.location.pathname + (params ? '#' + params : '');
+        window.open(url, '_blank');
+      });
+    }
+
+    // run on load
+    window.addEventListener('DOMContentLoaded', init);
+  </script>
+</body>
+</html>
